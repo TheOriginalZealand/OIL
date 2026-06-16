@@ -1,21 +1,20 @@
+#include "tokens.h"
+
 #ifndef function_h
 #define function_h
 
 typedef struct {
-    size_t name_len;
-    const char *name;
-
+    sToken name;
     size_t arguments;
 } sTypeNode;
 
 typedef struct {
-    size_t type_names_len;
-    sTypeNode *type_names_rpn;
+    size_t len;
+    sTypeNode *data;
 } sType;
 
 typedef struct {
-    size_t name_len;
-    const char *name;
+    sToken name;
     sType type;
 } sVar;
 
@@ -36,17 +35,25 @@ typedef enum {
 } eCommandType;
 
 typedef struct {
+    sToken name;
+    size_t arguments;
+} sExprNode;
+
+typedef struct {
+    size_t len;
+    sExprNode *data;
+} sExpr;
+
+typedef struct {
+    sToken name; // should be sExpr for lvalues, but those aren't handled yet
+    sExpr value;
 } sAssignCommand;
 
 typedef union {
-    sAssignCommand assign_command;
-    sCallCommand call_command;
-    sWhileCommand while_command;
-    sIfCommand if_command;
-    sElseIfCommand else_if_command;
-    size_t end_if_index;
-    size_t end_while_index;
-    size_t else_index;
+    sAssignCommand assign;
+    sExpr call;
+    sComCommand com_command;
+    size_t trivial_com_index;
 } uCommandData;
 
 typedef struct {
@@ -62,5 +69,34 @@ typedef struct {
     sType returns;
     sCommand commands;
 } sFunction;
+
+typedef struct {
+    sVar type;
+    sExpr value;
+} sConst;
+
+typedef enum {
+    GLOBAL_FUNCTION,
+    GLOBAL_CONST,
+} eGlobalType;
+
+typedef union {
+    sConst *constant;
+    sFunction *function;
+} uGlobalData;
+
+typedef struct {
+    eGlobalType type;
+    uGlobalData data;
+} sGlobalRef;
+
+typedef struct {
+    size_t globals_len;
+    sGlobalRef globals;
+    size_t constants_len;
+    sConstant *constants;
+    size_t functions_len;
+    sFunction *functions;
+} sGlobals;
 
 #endif
