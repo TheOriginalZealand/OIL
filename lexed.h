@@ -120,7 +120,7 @@ static inline sLexed lexer_lex_text(const char *text, bool *ok) {
             }
             lexed.tokens = data;
         }
-        lexed.data[lexed.len++] = dummy;
+        lexed.tokens[lexed.len++] = dummy;
     }
 
     return lexed;
