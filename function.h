@@ -1,4 +1,5 @@
-#include "tokens.h"
+#include <assert.h>
+#include "lexed.h"
 
 #ifndef function_h
 #define function_h
@@ -12,6 +13,11 @@ typedef struct {
     size_t len;
     sTypeNode *data;
 } sType;
+
+typedef struct {
+    // nothing
+    char nothing;
+} sTypeNamesList;
 
 typedef struct {
     sToken name;
@@ -48,6 +54,11 @@ typedef struct {
     sToken name; // should be sExpr for lvalues, but those aren't handled yet
     sExpr value;
 } sAssignCommand;
+
+typedef struct {
+    sExpr value_check;
+    size_t index;
+} sComCommand;
 
 typedef union {
     sAssignCommand assign;
@@ -98,5 +109,22 @@ typedef struct {
     size_t functions_len;
     sFunction *functions;
 } sGlobals;
+
+static inline bool parse_type(sLexed lexed, sTypeNamesList *types_list, size_t *idx, sType *out) {
+    assert(false);
+}
+
+// parsing commands requires previous command information, so no parse_command
+static inline sFunction parse_function(sLexed lexed, sTypeNamesList *types_list, size_t *idx) {
+    assert(false);
+}
+
+static inline sConst parse_constant(sLexed lexed, sTypeNamesList *types_list, size_t *idx) {
+    assert(false);
+}
+
+static inline sGlobals parse_globals(sLexed lexed) {
+    assert(false);
+}
 
 #endif
