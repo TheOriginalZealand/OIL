@@ -114,7 +114,7 @@ static inline sLexed lexer_lex_text(const char *text, bool *ok) {
             cap *= 2;
             void *data = realloc(lexed.tokens, sizeof(sToken) * cap);
             if (data == NULL) {
-                free(lexed.data);
+                free(lexed.tokens);
                 *ok = false;
                 return (sLexed) { 0 };
             }
