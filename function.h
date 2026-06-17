@@ -33,11 +33,11 @@ typedef enum {
     COMMAND_ASSIGN_VAR_EXPR,
     COMMAND_CALL_EXPR,
     COMMAND_WHILE,
-    COMMAND_ENDWHILE,
     COMMAND_IF,
     COMMAND_ELSE,
     COMMAND_ELSEIF,
-    COMMAND_ENDIF,
+    COMMAND_BLOCK,
+    COMMAND_END,
 } eCommandType;
 
 typedef struct {
@@ -63,8 +63,8 @@ typedef struct {
 typedef union {
     sAssignCommand assign;
     sExpr call;
-    sComCommand com_command;
-    size_t trivial_com_index;
+    sComCommand com_command; // if, while, elif
+    size_t trivial_com_index; // end, else, block
 } uCommandData;
 
 typedef struct {
@@ -108,18 +108,19 @@ typedef struct {
     sConstant *constants;
     size_t functions_len;
     sFunction *functions;
+    sTypeNamesList *types_list;
 } sGlobals;
 
-static inline bool parse_type(sLexed lexed, sTypeNamesList *types_list, size_t *idx, sType *out) {
+static inline bool parse_type(sLexed lexed, sGlobals *globals, size_t *idx, sType *out) {
     assert(false);
 }
 
 // parsing commands requires previous command information, so no parse_command
-static inline sFunction parse_function(sLexed lexed, sTypeNamesList *types_list, size_t *idx) {
+static inline sFunction parse_function(sLexed lexed, sGlobals *globals, size_t *idx) {
     assert(false);
 }
 
-static inline sConst parse_constant(sLexed lexed, sTypeNamesList *types_list, size_t *idx) {
+static inline sConst parse_constant(sLexed lexed, sGlobals *globals, size_t *idx) {
     assert(false);
 }
 
