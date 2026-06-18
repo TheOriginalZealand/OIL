@@ -7,7 +7,7 @@
 #include <ctype.h> // Just for fun
 
 static inline bool string_has_prefix(const char *x, const char *y) { return strncmp(x, y, strlen(y)) == 0; }
-static inline size_t string_find_nth_character(const char *x, char y, bool *ok) {
+static inline size_t string_find_n_of_character(const char *x, char y, bool *ok) {
     *ok = true;
     char *z = strchr(x, y);
     if (z == NULL) { *ok = false; return 0; }

@@ -11,7 +11,7 @@ typedef enum {
     TOKEN_IDENTIFIER = 1,
     TOKEN_NUMBER = 2,
     TOKEN_STRING = 3,
-    TOKEN_SPACE = 4,
+    TOKEN_USELESS = 4,
 } eTokenType;
 
 typedef struct {
@@ -80,6 +80,12 @@ static inline sToken lexer_lex_token(const char *text, bool *ok) {
         size_t len = string_find_end_of_string_literal(text, ok);
         if (!*ok) return (sToken) { 0 };
         return (sToken) { .type = TOKEN_STRING, .len = len, .text = text };
+    }
+    if (text[0] == '/' /* text[0] != '\0' */ && text[1] == '/') {
+        bool temp_ok;
+        size_t len = string_find_n_of_character(text, '\n', &temp_ok);
+        if (!temp_ok) len = strlen(text); // fucking useless
+        return (sToken) { .type = TOKEN_USELESS, .len = len, .text = text };
     }
     if (strchr(lexer_list_of_symbol_chars, text[0]) == NULL) {
         *ok = false;

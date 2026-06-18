@@ -15,8 +15,8 @@ typedef struct {
 } sType;
 
 typedef struct {
-    // nothing
-    char nothing;
+    // nothing yet
+    char nothing_yet_;
 } sTypeNamesList;
 
 typedef struct {
@@ -84,26 +84,11 @@ typedef struct {
 typedef struct {
     sVar type;
     sExpr value;
-} sConst;
-
-typedef enum {
-    GLOBAL_FUNCTION,
-    GLOBAL_CONST,
-} eGlobalType;
-
-typedef union {
-    sConst *constant;
-    sFunction *function;
-} uGlobalData;
+} sConstant;
 
 typedef struct {
-    eGlobalType type;
-    uGlobalData data;
-} sGlobalRef;
-
-typedef struct {
-    size_t globals_len;
-    sGlobalRef globals;
+    // NOTE: removed storage of order of functions and constants.
+    // TODO: When we need to append functions (macros) store capacity in here.
     size_t constants_len;
     sConstant *constants;
     size_t functions_len;
@@ -111,6 +96,7 @@ typedef struct {
     sTypeNamesList *types_list;
 } sGlobals;
 
+// returns true/false depending on whether or not this is a type (so we may backtrack and then parse variables)
 static inline bool parse_type(sLexed lexed, sGlobals *globals, size_t *idx, sType *out) {
     assert(false);
 }
@@ -125,7 +111,50 @@ static inline sConst parse_constant(sLexed lexed, sGlobals *globals, size_t *idx
 }
 
 static inline sGlobals parse_globals(sLexed lexed) {
-    assert(false);
+    size_t constants_cap = 16, functions_cap = 16;
+    sGlobals globals = {
+        .constants = malloc(sizeof(sConstant) * constants_cap)
+        .functions = malloc(sizeof(sFunction) * functions_cap)
+    };
+    assert(globals.constants != NULL);
+    assert(globals.functions != NULL);
+
+    size_t idx = 0;
+    while (idx < lexed.len) {
+        sToken token = lexed.tokens[idx];
+        if (token.type != TOKEN_IDENTIFIER) {
+            // TODO: Proper error message handling
+            // TODO: Error message line/file
+            fprintf(stderr, "ERROR: Expected identifier");
+            exit(1);
+        }
+
+        // token.type == TOKEN_IDENTIFIER
+
+        if (strcmp(token.text, "function") == 0) {
+            if (globals.functions_len + 1 > functions_cap) {
+                functions_cap *= 2;
+                void *data = realloc(globals.functions, sizeof(sFunction) * functions_cap);
+                assert(data != NULL);
+                globals.functions = data;
+            }
+            globals.functions[globals.functions_len++] = parse_function(lexed, &globals, &idx);
+        } else if (strcmp(token.text, "const") == 0) {
+            if (globals.constants_len + 1 > constants_cap) {
+                functions_cap *= 2;
+                void *data = realloc(globals.constants, sizeof(sConstant) * constants_cap);
+                assert(data != NULL);
+                globals.functions = data;
+            }
+            globals.constants[globals.constants_len++] = parse_function(lexed, &globals, &idx);
+        } else {
+            // TODO: error checking
+            fprintf(stderr, "ERROR: Incorrect identifier");
+            exit(1);
+        }
+    }
+
+    return globals;
 }
 
 #endif

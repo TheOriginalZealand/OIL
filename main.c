@@ -32,7 +32,10 @@ int main(int argc, char **argv) {
 
     if (!ok) {
         fprintf(stderr, "Failed to lex text (invalid token or something)!\n");
-        return 1;
+        // No memory cleanup here because:
+        // a. it's done automatically after exiting
+        // b. this program is not that advanced yet
+        exit(1);
     }
 
     for (size_t i = 0; i < lexed.len; ++i) {
