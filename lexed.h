@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "text.h"
+#include "da.h"
 
 #ifndef lexed_h
 #define lexed_h
@@ -74,7 +75,7 @@ static inline sToken lexer_lex_token(const char *text, bool *ok) {
         return (sToken) { .type = TOKEN_IDENTIFIER, .len = string_find_end_of_identifier(text), .text = text };
     }
     if (isspace(text[0])) {
-        return (sToken) { .type = TOKEN_SPACE, .len = string_find_end_of_whitespace(text), .text = text };
+        return (sToken) { .type = TOKEN_USELESS, .len = string_find_end_of_whitespace(text), .text = text };
     }
     if (text[0] == '\"') {
         size_t len = string_find_end_of_string_literal(text, ok);
@@ -107,26 +108,13 @@ static inline sLexed lexer_lex_text(const char *text, bool *ok) {
     sLexed lexed = { .len = 0 };
     const char *textptr1 = text;
     lexed.tokens = malloc(sizeof(sToken) * cap);
-    if (lexed.tokens == NULL) {
-        *ok = false;
-        return (sLexed) { 0 };
-    }
+    assert(lexed.tokens != NULL);
 
     while (*textptr1 != '\0') {
         sToken dummy = lexer_lex_token(textptr1, ok);
         if (!*ok) return (sLexed) { 0 };
         textptr1 += sizeof(char) * dummy.len;
-        if (lexed.len + 1 > cap) {
-            cap *= 2;
-            void *data = realloc(lexed.tokens, sizeof(sToken) * cap);
-            if (data == NULL) {
-                free(lexed.tokens);
-                *ok = false;
-                return (sLexed) { 0 };
-            }
-            lexed.tokens = data;
-        }
-        lexed.tokens[lexed.len++] = dummy;
+        if (dummy.type != TOKEN_SYMBOL) da_append(lexed.tokens, lexed.len, cap, dummy);
     }
 
     return lexed;

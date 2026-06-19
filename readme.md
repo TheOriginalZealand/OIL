@@ -20,5 +20,11 @@ end
 Oil's compiler has four stages:
 - lex (while checking lexical correctness)
 - parse (while checking well-formedness)
-- semantics/type-checking
-- codegen
+- type-checking
+- optimisation (add later)
+- codegen (while checking if constants are compile-time or not)
+## AST representation
+- expressions and types are stored recursively. commands are so simple, that they are not.
+- therefore, when we (programmers) do optimisation later, we will perform pattern-matching using tree-values for expressions
+- and pattern-matching similar to regex for code
+- and a combination between the two for the two together

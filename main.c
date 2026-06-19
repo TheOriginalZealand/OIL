@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include "lexed.h"
+#include "function.h"
 
 int main(int argc, char **argv) {
     assert(argc == 3);
