@@ -14,7 +14,7 @@ static inline size_t string_find_n_of_character(const char *x, char y, bool *ok)
     return (size_t) (z - x);
 }
 static inline size_t string_find_end_of_digits(const char *x) { return strspn(x, "0123456789"); }
-static inline size_t string_find_end_of_identifier(const char *x) { return strspn(x, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"); }
+static inline size_t string_find_end_of_identifier(const char *x) { return strspn(x, "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_.\'"); }
 static inline size_t string_find_end_of_whitespace(const char *x) { return strspn(x, " \n\t\r"); }
 static inline size_t string_find_end_of_string_literal(const char *x, bool *ok) {
     *ok = true;

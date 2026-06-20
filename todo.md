@@ -1,3 +1,12 @@
 # TODO:
 - Free unused data gracefully
-- Add dynamic allocation
+- Proper error checking - distinguish between assertions and actual error handling
+- Add dynamic memory allocation and pointers
+- Add "uses" to "block" construct, making it less useless
+- Add typedef
+- Add lvalue assignment
+- Add booleans
+- NEVER ADD STRUCTS - implement them through typedefs, tuples and inline functions
+- Dots, underscores and ticks are part of identifiers
+- Add inline functions
+- Add macros/some form of metaprogramming

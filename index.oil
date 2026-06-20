@@ -1,8 +1,10 @@
+const char '_0 = 0;
+
 function chtostr
 takes (list(char) string)
 returns tuple(list(char), int)
 uses (int i)
     i = 0;
-    while (string[i] != 0): i += 1;
+    while i*string != '_0 i += 1; end
     return tuple(string, i);
 end

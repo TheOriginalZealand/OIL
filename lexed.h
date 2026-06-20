@@ -4,6 +4,8 @@
 #include "text.h"
 #include "da.h"
 
+// useless tokens are not lexed
+
 #ifndef lexed_h
 #define lexed_h
 
@@ -71,7 +73,7 @@ static inline sToken lexer_lex_token(const char *text, bool *ok) {
     if (isdigit(text[0])) {
         return (sToken) { .type = TOKEN_NUMBER, .len = string_find_end_of_digits(text), .text = text };
     }
-    if (isalpha(text[0]) || text[0] == '_') {
+    if (isalpha(text[0]) || text[0] == '_' || text[0] == '.' || text[0] == '\'') {
         return (sToken) { .type = TOKEN_IDENTIFIER, .len = string_find_end_of_identifier(text), .text = text };
     }
     if (isspace(text[0])) {
@@ -114,7 +116,7 @@ static inline sLexed lexer_lex_text(const char *text, bool *ok) {
         sToken dummy = lexer_lex_token(textptr1, ok);
         if (!*ok) return (sLexed) { 0 };
         textptr1 += sizeof(char) * dummy.len;
-        if (dummy.type != TOKEN_SYMBOL) da_append(lexed.tokens, lexed.len, cap, dummy);
+        if (dummy.type != TOKEN_USELESS) da_append(lexed.tokens, lexed.len, cap, dummy);
     }
 
     return lexed;
