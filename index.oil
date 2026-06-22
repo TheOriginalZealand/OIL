@@ -5,6 +5,6 @@ takes (list(char) string)
 returns tuple(list(char), int)
 uses (int i)
     i = 0;
-    while i*string != '_0 i += 1; end
+    while string:i != '_0 i += 1; end
     return tuple(string, i);
 end
