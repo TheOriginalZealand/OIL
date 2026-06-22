@@ -10,3 +10,4 @@
 - Dots, underscores and ticks are part of identifiers
 - Add inline functions
 - Add macros/some form of metaprogramming
+- Add default constructors/destructors to typedefs

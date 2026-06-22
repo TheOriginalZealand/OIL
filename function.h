@@ -28,8 +28,10 @@ typedef struct {
 } sVarList;
 
 typedef enum {
-    COMMAND_ASSIGN_VAR_EXPR = 0,
+    // TODO: Deprecate these two and add syntactic sugar operators +=, -=, *=, etc
+    COMMAND_ASSIGN_VAR_EXPR = 2,
     COMMAND_ASSIGN_INDEX_EXPR = 5, // TODO: Deprecate this, replace with lvalues in assign_var_expr
+    // END TODO
     COMMAND_CALL_EXPR = 10,
     COMMAND_WHILE = 20,
     COMMAND_IF = 30,
@@ -184,26 +186,227 @@ static inline void free_expr(sExpr expr) {
 }
 
 // precedence
+static bool parse_expr_token_or_function_call(sLexed lexed, sGlobals *globals, size_t *idx, sExpr *expr) {
+    if (*idx >= lexed.len) return false;
+    sToken tok = lexed.tokens[*idx];
+    if (token_is(tok, "(", TOKEN_SYMBOL)) {
+        ++(*idx);
+        if (*idx >= lexed.len) {
+            free_expr(&first);
+            return false;
+        }
+        bool ok = parse_expr(lexed, globals, idx, expr);
+        if (!ok || *idx > lexed.len) { 
+            free_expr(expr);
+            return false;
+        }
+        if (!token_is(lexed.tokens[(*idx)++], ")", TOKEN_SYMBOL)) {
+            free_expr(expr);
+            return false;
+        }
+    } else if (tok.type == TOKEN_IDENTIFIER && *idx < lexed.len && token_is(lexed->tokens[*idx + 1], "(", TOKEN_SYMBOL)) {
+        ++(*idx);
+        if (*idx >= lexed.len) {
+            return false;
+        }
+
+        expr->name = tok;
+        expr->len = 0;
+        size_t expr_cap = 16;
+        expr->data = malloc(sizeof(sExpr) * expr_cap);
+
+        while (1) {
+            sExpr first;
+            bool ok = parse_expr(lexed, globals, idx, &first);
+            if (!ok) {
+                *idx = start_idx;
+                free_expr(*expr);
+                return false;
+            }
+            da_append(expr->data, expr->len, expr_cap, first);
+            if (*idx >= lexed.len) {
+                *idx = start_idx;
+                free_type(*out);
+                return false;
+            }
+            sToken next = lexed.tokens[(*idx)++];
+            if (next.type != TOKEN_SYMBOL) {
+                *idx = start_idx;
+                free_expr(*expr);
+                return false;
+            }
+            if (token_has_text(next, ")")) {
+                break;
+            } else if (token_has_text(next, ",")) {
+                continue;
+            }
+            *idx = start_idx;
+            free_expr(*expr);
+            return false;
+        }
+    } else {
+        expr->name = tok;
+        expr->len = 0;
+        expr->data = malloc(sizeof(sExpr) * 1);
+    }
+    return true;
+}
 
 static bool parse_expr_index(sLexed lexed, sGlobals *globals, size_t *idx, sExpr *expr) {
+    sExpr first;
+    if (!parse_expr_token_or_function_call(lexed, globals, idx, first)) return false;
+    while (*idx < lexed.len) {
+        sToken next = lexed.tokens[*idx];
+        sExpr third = first;
+        if (token_is(next, ":", TOKEN_SYMBOL)) {
+            (*idx)++;
+            if (*idx >= lexed.len) {
+                free_expr(&first);
+                return false;
+            }
+            third.name = next;
+            third.len = 2;
+            sExpr second;
+            if (!parse_expr_index(lexed, globals, idx, second)) {
+                free_expr(&first);
+                return false;
+            }
+            third->data = malloc(sizeof(sExpr) * 2);
+            ((sExpr *)third.data)[0] = first;
+            ((sExpr *)third.data)[1] = second;
+            first = third; // so *expr = third
+            continue;
+        }
+        break;
+    }
+    *expr = first;
+    return true;
 }
 
 static bool parse_expr_prefix(sLexed lexed, sGlobals *globals, size_t *idx, sExpr *expr) {
+    sToken tok = lexed.tokens[*idx];
+    if (token_is(tok, "!", TOKEN_SYMBOL) || token_is(tok, "-", TOKEN_SYMBOL) || token_is(tok, "*", TOKEN_SYMBOL) || token_is(tok, "&", TOKEN_SYMBOL)) {
+        (*idx)++;
+        if (*idx >= lexed.len) {
+            free_expr(&first);
+            return false;
+        }
+        sExpr prefix;
+        prefix.name = tok;
+        prefix.len = 1;
+        prefix.data = malloc(sizeof(sExpr));
+        bool ok = parse_expr_index(lexed, globals, idx, &(sExpr *) prefix.data /* [0] */);
+        if (!ok) { prefix.len = 0; free_expr(prefix); } // redundant
+        *expr = prefix;
+        return ok;
+    } else {
+        return parse_expr_index(lexed, globals, idx, expr);
+    }
 }
 
 static bool parse_expr_infix(sLexed lexed, sGlobals *globals, size_t *idx, sExpr *expr) {
+    sExpr first;
+    if (!parse_expr_prefix(lexed, globals, idx, first)) return false;
+    while (*idx < lexed.len) {
+        sToken next = lexed.tokens[*idx];
+        sExpr third = first;
+        if (token_is(next, "<", TOKEN_SYMBOL) || token_is(next, ">", TOKEN_SYMBOL)
+            || token_is(next, "<<", TOKEN_SYMBOL) || token_is(next, ">>", TOKEN_SYMBOL)
+            || token_is(next, "<=", TOKEN_SYMBOL) || token_is(next, ">=", TOKEN_SYMBOL)
+            || token_is(next, "==", TOKEN_SYMBOL) || token_is(next, "&&", TOKEN_SYMBOL)
+            || token_is(next, "||", TOKEN_SYMBOL) || token_is(next, "&&", TOKEN_SYMBOL)
+            || token_is(next, "^", TOKEN_SYMBOL) || token_is(next, "&", TOKEN_SYMBOL)
+            || token_is(next, "|", TOKEN_SYMBOL)) {
+            (*idx)++;
+            if (*idx >= lexed.len) {
+                free_expr(&first);
+                return false;
+            }
+            third.name = next;
+            third.len = 2;
+            sExpr second;
+            if (!parse_expr_infix(lexed, globals, idx, second)) {
+                free_expr(&first);
+                return false;
+            }
+            third->data = malloc(sizeof(sExpr) * 2);
+            ((sExpr *)third.data)[0] = first;
+            ((sExpr *)third.data)[1] = second;
+            first = third; // so *expr = third
+            continue;
+        }
+        break;
+    }
+    *expr = first;
+    return true;
 }
 
 static bool parse_expr_muldiv(sLexed lexed, sGlobals *globals, size_t *idx, sExpr *expr) {
+    sExpr first;
+    if (!parse_expr_infix(lexed, globals, idx, first)) return false;
+    while (*idx < lexed.len) {
+        sToken next = lexed.tokens[*idx];
+        sExpr third = first;
+        if (token_is(next, "*", TOKEN_SYMBOL) || token_is(next, "/", TOKEN_SYMBOL)) {
+            (*idx)++;
+            if (*idx >= lexed.len) {
+                free_expr(&first);
+                return false;
+            }
+            third->name = next;
+            third->len = 2;
+            sExpr second;
+            if (!parse_expr_muldiv(lexed, globals, idx, second)) {
+                free_expr(&first);
+                return false;
+            }
+            third->data = malloc(sizeof(sExpr) * 2);
+            ((sExpr *)third->data)[0] = first;
+            ((sExpr *)third->data)[1] = second;
+            first = third;
+            continue;
+        }
+        break;
+    }
+    *expr = first;
+    return true;
 }
 
 static bool parse_expr_addsub(sLexed lexed, sGlobals *globals, size_t *idx, sExpr *expr) {
+    sExpr first;
+    if (!parse_expr_muldiv(lexed, globals, idx, first)) return false;
+    while (*idx < lexed.len) {
+        sToken next = lexed.tokens[*idx];
+        sExpr third = first;
+        if (token_is(next, "+", TOKEN_SYMBOL) || token_is(next, "-", TOKEN_SYMBOL)) {
+            (*idx)++;
+            if (*idx >= lexed.len) {
+                free_expr(&first);
+                return false;
+            }
+            third->name = next;
+            third->len = 2;
+            sExpr second;
+            if (!parse_expr_addsub(lexed, globals, idx, second)) {
+                free_expr(&first);
+                return false;
+            }
+            third->data = malloc(sizeof(sExpr) * 2);
+            ((sExpr *)third->data)[0] = first;
+            ((sExpr *)third->data)[1] = second;
+            first = third;
+            continue;
+        }
+        break;
+    }
+    *expr = first;
+    return true;
 }
 
 // end precedence
 
 static inline bool parse_expr(sLexed lexed, sGlobals *globals, size_t *idx, sExpr *expr) {
-    assert(false);
+    return parse_expr_addsub(lexed, globals, idx, expr);
 }
 
 static inline sFunction parse_function(sLexed lexed, sGlobals *globals, size_t *idx) {

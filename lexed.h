@@ -59,14 +59,13 @@ const char lexer_list_of_symbols[][4] = {
     "/\0\0\0",
     "(\0\0\0",
     ")\0\0\0",
-    "[\0\0\0",
-    "]\0\0\0",
+    // NOTE: Removed '[' and ']' in favor of ':'
     ",\0\0\0",
     ":\0\0\0",
     ";\0\0\0",
 };
 #define lexer_num_of_symbols (sizeof(lexer_list_of_symbols) / sizeof(lexer_list_of_symbols[0]))
-const char *lexer_list_of_symbol_chars = "<>=&|!^+-*/()[],:;";
+const char *lexer_list_of_symbol_chars = "<>=&|!^+-*/(),:;";
 
 static inline sToken lexer_lex_token(const char *text, bool *ok) {
     *ok = true;

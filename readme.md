@@ -52,7 +52,8 @@ end
 - currently, one may use (and only use - not on array indices) sizeof on types.
 - we will add lvalues later. until then, array/index expressions are disgustingly simple.
 - function arguments are not separated by commas, but type arguments are. this is inspired by SQL.
-- void is a type.
+- void is a type and alias for char.
+- functions may not be called as types, as they do not exist as types.
 ## Notes
 - characters are 8-bit.
 - integers are 32-bit.
@@ -70,3 +71,6 @@ Oil's compiler has four stages:
 - therefore, when we (programmers) add optimisation later, we will perform pattern-matching using tree-values for expressions
 - and pattern-matching similar to regex for code
 - and a combination between the two for the two together
+
+# Note on usage
+WARNING: DO NOT USE FOR COMMERCIAL PURPOSES; THIS LANGUAGE IS LITERALLY MADE BY TEENAGERS. EVEN THE COMPILER IS UNSAFE. 
